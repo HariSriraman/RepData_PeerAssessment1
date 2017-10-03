@@ -1,25 +1,85 @@
----
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
----
+#Course 5 Reproducesable Research - Week 2 Assignment 
+###by Hari Sriraman
 
+#Peer-graded Assignment: Course Project 1
 
-## Loading and preprocessing the data
+### Code for reading in the dataset and/or processing the data
 
+```{r Read File, echo=TRUE}
+setwd("C:/Users/hsrirama/Documents/Personal/Coursera/Course 5 - Reproducesable Research/Project")
 
+if(!file.exists("activity.csv")) {
+    unzip("repdata_data_activity.zip")
+}
 
-## What is mean total number of steps taken per day?
+acty_ds = read.csv("activity.csv")
 
+```
 
+### Histogram of the total number of steps taken each day
+```{r Histogram ~ Date, echo=TRUE}
+acty_steps_by_day <- aggregate(steps ~ date, acty_ds, sum, na.action = na.pass)
+hist(acty_steps_by_day$steps, col="blue", main = "Total # steps/day", xlab = "# of steps")
 
-## What is the average daily activity pattern?
+```
 
+### Mean and median number of steps taken each day
+```{r Mean and Median steps/day}
+r_stp_mean <- mean(acty_steps_by_day$steps)
+message("Mean = ", r_stp_mean)
 
+r_stp_medn <- median(acty_steps_by_day$steps)
+message("Median = ", r_stp_medn)
+```
 
-## Imputing missing values
+### Time series plot of the average number of steps taken. 
 
+```{r time series}
+acty_mean_interval <- tapply(acty_ds$steps, acty_ds$interval, mean, na.rm = T)
 
+plot(acty_mean_interval, type = "l", main = "Time Series Plot", xlab = "The 5 minute interval", ylab = "the Avg # of steps")
 
-## Are there differences in activity patterns between weekdays and weekends?
+```
+
+### The 5-minute interval that, on average, contains the maximum number of steps
+
+```{r max # of steps}
+head(sort(acty_mean_interval, decreasing = TRUE), 1)
+```
+
+### Code to describe and show a strategy for imputing missing data
+
+```{r}
+acty_stepsNA <- sum(is.na(acty_ds$steps))
+acty_dateNA <- sum(is.na(acty_ds$date))
+acty_intvlNA <- sum(is.na(acty_ds$interval))
+
+message("Missing Steps = ", acty_stepsNA)
+message("Missing Dates = ", acty_dateNA)
+message("Missing Interval = ", acty_intvlNA)
+
+table(is.na(acty_ds$steps), acty_ds$interval, acty_ds$date)
+```
+
+### Histogram of the total number of steps taken each day after missing values are imputed
+```{r}
+acty_steps_by_day <- aggregate(steps ~ date, acty_ds, sum, na.action = na.exclude)
+hist(acty_steps_by_day$steps, col="blue", main = "Total # steps/day", xlab = "# of steps")
+```
+
+### Panel plot comparing the average number of steps taken per 5-minute interval across weekdays and weekends
+
+```{r comparison}
+weekdays <- c("Monday", "Tuesday", "Wednesday", "Thursday", 
+              "Friday")
+acty_ds$dow = as.factor(ifelse(is.element(weekdays(as.Date(acty_ds$date)),weekdays), "Weekday", "Weekend"))
+
+steps_by_interval_acty <- aggregate(steps ~ interval + dow, acty_ds, mean)
+
+library(lattice)
+
+xyplot(steps_by_interval_acty$steps ~ steps_by_interval_acty$interval|steps_by_interval_acty$dow, main="Average steps/day by interval",xlab="Interval", ylab="Steps",layout=c(1,2), type="l")
+
+```
+
+### End of document
